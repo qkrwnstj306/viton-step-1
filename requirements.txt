@@ -1,0 +1,14 @@
+opencv-python
+xformers
+coloredlogs
+peft
+loralib
+transformers
+pytorch-lightning==1.6.5
+albumentations
+einops
+tensorboard
+tensorboardX
+
+cuda version 에 맞는 xformers (xformers 설치하고 torch 도 다시 설치)
+xformers 는 pip3 install -U xformers --index-url https://download.pytorch.org/whl/cu118 이거로 설치한다 (cuda 11.8 일 경우에)
