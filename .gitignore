@@ -1,0 +1,7 @@
+*.ckpt
+*.png
+*.jpg
+*.json
+logs
+dataset/zalando-hd-resized
+__pycache__

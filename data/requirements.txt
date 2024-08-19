@@ -1,0 +1,2 @@
+v1.5-pruned.ckpt
+VITONHD_VAE_finetuning.ckpt
