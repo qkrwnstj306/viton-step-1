@@ -28,10 +28,6 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
-"""
-CUDA_VISIBLE_DEVICES=0 python inference.py --seed 0 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
-"""
-
 def setting():
     # Load Arguments 
 
@@ -39,7 +35,7 @@ def setting():
 
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
-    ckpt_pth = './weights/eps/epoch=85-step=31304.ckpt'
+    ckpt_pth = './weights/eps/epoch=20-step=7644.ckpt'
     models = model_loader.load_models_from_fine_tuned_weights(ckpt_pth, 'cpu')
     logger.info("MODEL LOAD COMPLETE...!")
 

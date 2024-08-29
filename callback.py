@@ -31,13 +31,13 @@ class SaveImageCallback(Callback):
         self.save_dir = save_dir
 
     @rank_zero_only
-    def log_local(self, input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, global_step, current_epoch, batch_idx, CFG):
+    def log_local(self, input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, canny, global_step, current_epoch, batch_idx, CFG):
         if not os.path.isdir(self.save_dir):
               os.makedirs(self.save_dir)
         filename = "gs-{:06}_e-{:06}_b-{:06}_cfg-{}.png".format(global_step, current_epoch, batch_idx,CFG)
         save_path = f"{self.save_dir}/{filename}"
 
-        grid_images = torch.cat((input_image, predicted_images, cloth_agnostic_mask, densepose, cloth), dim=0)
+        grid_images = torch.cat((input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, canny.repeat(1, 3, 1, 1)), dim=0)
         grid = make_grid(grid_images, normalize=True)
         save_image(grid, save_path)
 
@@ -50,9 +50,9 @@ class SaveImageCallback(Callback):
               pl_module.eval()
 
           with torch.no_grad():
-              input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, CFG = pl_module.log_images(batch, batch_idx)
+              input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, canny, CFG = pl_module.log_images(batch, batch_idx)
 
-          self.log_local(input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, pl_module.global_step, pl_module.current_epoch, batch_idx, CFG)
+          self.log_local(input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, canny, pl_module.global_step, pl_module.current_epoch, batch_idx, CFG)
 
           if is_train:
               pl_module.train()

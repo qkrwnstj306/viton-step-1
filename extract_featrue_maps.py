@@ -29,7 +29,8 @@ LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
 """
-CUDA_VISIBLE_DEVICES=0 python inference.py --seed 0 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
+python extract_feature_maps.py --debugging True --block_index -1
+python extract_feature_maps.py --debugging False --only_one_data True --certain_data_idx 00126_00.jpg --block_index -1
 """
 
 def setting():
@@ -39,13 +40,13 @@ def setting():
 
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
-    ckpt_pth = './weights/eps/epoch=85-step=31304.ckpt'
+    ckpt_pth = './weights/epoch=65-step=48048.ckpt'
     models = model_loader.load_models_from_fine_tuned_weights(ckpt_pth, 'cpu')
     logger.info("MODEL LOAD COMPLETE...!")
 
     # Load Dataset 
     logger.info("Data LOAD...!")
-    test_dataset = MyTrainDataset(args.debugging, is_train=False, is_paired=args.paired)
+    test_dataset = MyTrainDataset(args.debugging, is_train=False, is_paired=args.paired, only_one_data=args.only_one_data, certain_data_idx=args.certain_data_idx)
     
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, collate_fn=collate_fn, 
                                                    shuffle=False, pin_memory=True, num_workers=4)
@@ -59,7 +60,7 @@ def main_worker(args, models, data_module):
     is_paired = "paired"
     if not args.paired:
         is_paired = "unpaired"
-    save_dir = args.save_dir + f'/{is_paired}/cfg_{args.cfg_scale}'
+    save_dir = './outputs/feature_map/generated_image'
     os.makedirs(save_dir, exist_ok=True)
     # Model Setting 
     diffusion = models["diffusion"]
@@ -75,12 +76,12 @@ def main_worker(args, models, data_module):
 
     del models
     
+    args.do_cfg = False
     # Train and Validate 
 
     for batch_idx, batch in enumerate(data_module):
         print(f"{batch_idx}/{len(data_module)}")
-        predicted_images, CFG = model.test_step(batch, batch_idx)
-        
+        predicted_images, CFG = model.extract_feature_map(batch, batch_idx, args.block_index)
         
         for predicted_image, input_image, agn_mask, img_fn, cloth_fn in zip(predicted_images, batch['input_image'], 
                                                      batch['agn_mask'], batch['img_fn'], batch['cloth_fn']):
@@ -97,7 +98,7 @@ def main_worker(args, models, data_module):
                 
                 predicted_image = agn_mask * predicted_image + (1. - agn_mask) * input_image
             
-            filename = f"{img_fn.split('.')[0]}_{cloth_fn.split('.')[0]}.jpg"
+            filename = f"{batch_idx}.jpg"
             save_pth = os.path.join(save_dir, filename)
             cv2.imwrite(save_pth, predicted_image[:,:,::-1])
 

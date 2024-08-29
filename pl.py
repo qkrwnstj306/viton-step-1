@@ -24,18 +24,17 @@ WIDTH = 384
 HEIGHT = 512   
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
-#torch.autograd.set_detect_anomaly(True)
+
 def setting():
     # Load Arguments 
 
     args = arguments()
 
     # Load Parameter of SDv1.5
-    logger.info("MODEL LOAD...!")
-    model_file = '../data/v1-5-pruned.ckpt'
-    vae_file = '../data/VITONHD_VAE_finetuning.ckpt'
-    models = model_loader.preload_models_from_standard_weights(model_file, vae_file, 'cpu')
-    logger.info("MODEL LOAD COMPLETE...!")
+    logger.info("STATE DICT LOAD...!")
+    model_file = './v2/weights/eps/epoch=95-step=34944.ckpt'
+    models = model_loader.preload_models_from_standard_weights(model_file, 'cpu')
+    logger.info("STATE DICT LOAD COMPLETE...!")
 
     # Load Dataset 
     logger.info("Data LOAD...!")
@@ -53,9 +52,12 @@ def main_worker(args, models, data_module):
     mlp = models["mlp"]     
     decoder = models["decoder"] 
     encoder = models["encoder"]
-
+    state_dict = models["state_dict"]
+    
     # Train and Validate 
-    model = LiTModel(diffusion, mlp, dinov2, decoder, encoder,args)
+    model = LiTModel(diffusion, mlp, dinov2, decoder, encoder, args)
+    model.load_state_dict(state_dict, strict=False)
+    model.diffusion.copy_diffusion_weights_to_controlnet()
     del models
 
     tb_logger = loggers.TensorBoardLogger('./logs')
@@ -65,9 +67,10 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/v/epoch=20-step=7644.ckpt'
+        resume_from_checkpoint = './weights/eps/epoch=20-step=7644.ckpt'
     else:
         resume_from_checkpoint = None
+        
     trainer = pl.Trainer(gpus=args.n_gpus,
                         resume_from_checkpoint=resume_from_checkpoint,
                         max_epochs=args.n_epochs,

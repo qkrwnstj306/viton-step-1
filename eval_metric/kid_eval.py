@@ -53,7 +53,7 @@ def cal_kid(original_dir, generated_dir):
     print(kid_mean, kid_std)
 
 if __name__=='__main__':
-    idx = 100
+    idx = 95
     generated_dir_lst = [f'../v2/outputs/epoch-{idx}/unpaired/cfg_5',
                          ]
     

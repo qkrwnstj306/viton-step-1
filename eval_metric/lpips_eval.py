@@ -51,7 +51,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     original_dir = '../dataset/zalando-hd-resized/test/image'
     
-    idx = 100
+    idx = 105
     generated_dir_lst = [f'../v2/outputs/epoch-{idx}/paired/cfg_5', 
                          ]
     generated_dir = generated_dir_lst[0]
