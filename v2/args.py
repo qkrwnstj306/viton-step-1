@@ -25,11 +25,13 @@ def arguments():
     parser.add_argument('--resume', type=str2bool, default=False)
     parser.add_argument('--use_attention_loss', type=str2bool, default=False)
     parser.add_argument('--use_pixel_loss', type=str2bool, default=False)
+    parser.add_argument('--weight_dir', type=str, default='eps')
     
     # all inference 
     parser.add_argument('--paired', type=str2bool, default=True)
     parser.add_argument('--blending', type=str2bool, default=False)
     parser.add_argument('--save_dir', type=str, default='./outputs/epoch-0')
+    parser.add_argument('-s', '--seed', type=int, default=-1)
     
     # attribution map visualization
     parser.add_argument('--generated_image', type=str2bool, default=True)
@@ -49,7 +51,6 @@ def arguments():
     # train & inference
     parser.add_argument('-bs', '--batch_size', type=int, default=1)
     parser.add_argument('-cfg', '--do_cfg', type=str2bool, default=True)
-    parser.add_argument('-s', '--seed', type=int, default=0)
     parser.add_argument('-ng', '--n_gpus', type=int, default=2)
     parser.add_argument('--cfg_scale', type=float, default=5) # if set 1, only use cond 
     parser.add_argument('--parameterization', type=str, default='eps') # v

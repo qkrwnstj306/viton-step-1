@@ -10,27 +10,32 @@ import torch
 from peft import PeftModel
 
 def preload_models_from_standard_weights(ckpt_path, ckpt_path2, device):
-    state_dict = model_converter.load_from_standard_weights(ckpt_path, device)
-    vae_state_dict = vae_custom_converter.load_from_standard_weights_VAE(ckpt_path2, device)
+
+    if ckpt_path is not None and ckpt_path2 is not None:
+        state_dict = model_converter.load_from_standard_weights(ckpt_path, device)
+        vae_state_dict = vae_custom_converter.load_from_standard_weights_VAE(ckpt_path2, device)
     
-    existing_weight = state_dict['diffusion']['unet.encoders.0.0.weight']
-    weight_new_channels = torch.zeros(320,4+4+4+1,3,3)
-    state_dict['diffusion']['unet.encoders.0.0.weight'] = torch.nn.Parameter(torch.cat((existing_weight, weight_new_channels), dim=1))
+        existing_weight = state_dict['diffusion']['unet.encoders.0.0.weight']
+        weight_new_channels = torch.zeros(320,4+4+4+1,3,3)
+        state_dict['diffusion']['unet.encoders.0.0.weight'] = torch.nn.Parameter(torch.cat((existing_weight, weight_new_channels), dim=1))
 
     diffusion = Diffusion()
-    diffusion.load_state_dict(state_dict['diffusion'], strict=False)
+    if ckpt_path is not None and ckpt_path2 is not None:
+        diffusion.load_state_dict(state_dict['diffusion'], strict=False)
     
     encoder = VAE_Encoder()
-    encoder.load_state_dict(vae_state_dict['encoder'], strict=True)
+    if ckpt_path is not None and ckpt_path2 is not None:
+        encoder.load_state_dict(vae_state_dict['encoder'], strict=True)
 
     decoder = VAE_Decoder()
-    decoder.load_state_dict(vae_state_dict['decoder'], strict=True)
+    if ckpt_path is not None and ckpt_path2 is not None:
+        decoder.load_state_dict(vae_state_dict['decoder'], strict=True)
     
     dinov2 = DINOv2()
-    
     mlp = MLPProjModel()
 
-    del state_dict
+    if ckpt_path is not None and ckpt_path2 is not None:
+        del state_dict
     
     return {
         'dinov2': dinov2,

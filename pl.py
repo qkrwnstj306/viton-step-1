@@ -67,7 +67,7 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/eps/epoch=20-step=7644.ckpt'
+        resume_from_checkpoint = './weights/eps/epoch=51-step=13286.ckpt'
     else:
         resume_from_checkpoint = None
         

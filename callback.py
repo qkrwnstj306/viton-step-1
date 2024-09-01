@@ -15,7 +15,7 @@ def lr_monitor_setting():
 def model_checkpoint_setting():
 
     return ModelCheckpoint(
-        dirpath=f'./weights/eps/',
+        dirpath=f'./weights/{args.weight_dir}/',
         filename='{epoch}-{step}',
         save_top_k=-1,
         every_n_epochs=1,

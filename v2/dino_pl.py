@@ -32,9 +32,12 @@ def setting():
 
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
-    model_file = '../data/v1-5-pruned.ckpt'
-    vae_file = '../data/VITONHD_VAE_finetuning.ckpt'
-    models = model_loader.preload_models_from_standard_weights(model_file, vae_file, 'cpu')
+    if args.resume == False:
+        model_file = '../data/v1-5-pruned.ckpt'
+        vae_file = '../data/VITONHD_VAE_finetuning.ckpt'
+        models = model_loader.preload_models_from_standard_weights(model_file, vae_file, 'cpu')
+    else:
+        models = model_loader.preload_models_from_standard_weights(None, None, 'cpu')
     logger.info("MODEL LOAD COMPLETE...!")
 
     # Load Dataset 
@@ -65,7 +68,7 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/v/epoch=20-step=7644.ckpt'
+        resume_from_checkpoint = './weights/epoch=85-step=31304.ckpt'
     else:
         resume_from_checkpoint = None
     trainer = pl.Trainer(gpus=args.n_gpus,

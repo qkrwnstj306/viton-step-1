@@ -51,10 +51,11 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     original_dir = '../dataset/zalando-hd-resized/test/image'
     
-    idx = 105
+    idx = 65
     generated_dir_lst = [f'../v2/outputs/epoch-{idx}/paired/cfg_5', 
+                         f'../outputs/epoch-{idx}/paired/cfg_5'
                          ]
-    generated_dir = generated_dir_lst[0]
+    generated_dir = generated_dir_lst[1]
     generated_img_extension = '.jpg'
 
     dataset = CustomDataset(original_dir, generated_dir, generated_img_extension)

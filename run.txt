@@ -1,14 +1,51 @@
  train
-Step1: CUDA_VISIBLE_DEVICES=0,1,2,3 python dino_pl.py --resume False --n_gpus 4 --parameterization eps --batch_size 32
-Step2: CUDA_VISIBLE_DEVICES=3,4,5,6 python pl.py --resume False --n_gpus 4 --batch_size 16
+Step1: CUDA_VISIBLE_DEVICES=0,1,2,3 python dino_pl.py \
+--resume False \
+--n_gpus 4 \
+--parameterization eps \
+--batch_size 32
+
+Attention loss in Step1: CUDA_VISIBLE_DEVICES=3,4,5,6 python dino_pl.py \
+--resume True \
+--n_gpus 4 \
+--batch_size 32 \
+--use_attention_loss True \
+--weight_dir eps/attn_loss
+
+Step2: CUDA_VISIBLE_DEVICES=3,4,5,6 python pl.py \
+--resume False \
+--n_gpus 4 \
+--batch_size 32
 
 # Dimension reduction
-python extract_feature_maps.py --debugging True --block_index -1
-python extract_feature_maps.py --debugging False --only_one_data True --certain_data_idx 00126_00.jpg --block_index -1
-python run_features_pca.py --batch_end_idx 4 --reduce_method umap --block 3 (--all_blocks True)
+python extract_feature_maps.py \
+--debugging True \
+--block_index -1
+python extract_feature_maps.py \
+--debugging False \
+--only_one_data True \
+--certain_data_idx 00126_00.jpg \
+--block_index -1
+python run_features_pca.py \
+--batch_end_idx 4 \
+--reduce_method umap \
+--block 3 (--all_blocks True)
 
 # attention map
-CUDA_VISIBLE_DEVICES=1 python attention_inference.py --generated_image False --specific_reference_attribution_maps True --patch_index 6 --save_dir ./outputs/epoch-81 --only_one_data True --certain_data_idx 00865_00.jpg --seed 0 --rescale 0/0.3/0.5/0.7/0.9 --cfg_scale 5.0/7.5
+CUDA_VISIBLE_DEVICES=2 python attention_inference.py \
+--generated_image False \
+--specific_reference_attribution_maps True \
+--patch_index 6 --save_dir ./outputs/epoch-95_attn \
+--only_one_data True \
+--certain_data_idx 00865_00.jpg \
+--seed 0 \
+--rescale 0 \
+--cfg_scale 5.0
 
 # inference
-CUDA_VISIBLE_DEVICES=0 python inference.py --seed 0 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
+CUDA_VISIBLE_DEVICES=0 python inference.py \
+--seed 0 \
+--save_dir ./outputs/epoch-54 \
+--paired False \
+--blending False \
+--batch_size 4
