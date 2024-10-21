@@ -8,7 +8,7 @@ import os
 
 import xformers.ops as xops
 
-from utils import save_center_coords, save_center_coords_to_heatmap
+from utils import save_center_coords, save_center_coords_to_heatmap, save_binary_images
 
 
 """
@@ -18,8 +18,8 @@ Class for Attention Loss (CWG loss & DCML loss & TV loss)
 class AttentionLoss(nn.Module):
     def __init__(self):
         super(AttentionLoss, self).__init__()
-        self.cwg_strength = 2 # 3 
-        self.dcml_strength = 0.01
+        self.cwg_strength = 2.0 # 3 
+        self.dcml_strength = 0.01 # tv와 100배 차이 (origin: 0.01, 0.0001) vs 10000배 차이 (colab, 0.01, 0.000001)
         self.tv_strength = 0.0001 # 0.0001
         
         self.tv_l_type = "l2"
@@ -306,7 +306,9 @@ class CrossAttention(nn.Module):
         self.n_heads = n_heads
         self.d_head = d_embed // n_heads
 
-        self.apply_attn_loss = apply_attn_loss 
+        self.apply_attn_loss = apply_attn_loss
+        if self.apply_attn_loss:
+            self.attn_loss_class = AttentionLoss() 
         self.idx_coords_for_debugging = -1
         
         self.q = None
@@ -462,21 +464,19 @@ class CrossAttention(nn.Module):
                 weighted_grid_hw = reshaped_sim.unsqueeze(2) * grid_hw.unsqueeze(0).unsqueeze(0)  # [b HW 2 h w]
                 weighted_centered_grid_hw = weighted_grid_hw.sum((-2,-1))  # [b HW 2], center-coordinate maps
                 
-                attn_loss_class = AttentionLoss()
-                
-                cwg_loss = attn_loss_class.get_cwgloss(reshaped_sim, weighted_centered_grid_hw, warped_cloth_mask, mh=mh, mw=mw, sigma=1)
-                tv_loss = attn_loss_class.get_tvloss(weighted_centered_grid_hw, warped_cloth_mask, cH=mH, cW=mW)
-                dcml_loss = attn_loss_class.get_dcmlloss(weighted_centered_grid_hw, warped_cloth_mask, cH=mH, cW=mW)
+                cwg_loss = self.attn_loss_class.get_cwgloss(reshaped_sim, weighted_centered_grid_hw, warped_cloth_mask, mh=mh, mw=mw, sigma=1)
+                tv_loss = self.attn_loss_class.get_tvloss(weighted_centered_grid_hw, warped_cloth_mask, cH=mH, cW=mW)
+                dcml_loss = self.attn_loss_class.get_dcmlloss(weighted_centered_grid_hw, warped_cloth_mask, cH=mH, cW=mW)
 
                 """Save the center-coordinate maps for debugging"""
                 self.idx_coords_for_debugging += 1
-                if self.idx_coords_for_debugging % 500 == 0:
+                if self.idx_coords_for_debugging % 300 == 0:
                     dir_name = "./outputs/center_coords/"
                     os.makedirs(dir_name, exist_ok=True)
                     timestamp = int(time.time())
                     file_name = dir_name + f"{self.idx_coords_for_debugging}_{timestamp}"
                     save_center_coords_to_heatmap(weighted_centered_grid_hw.view(-1, mH, mW, 2), warped_cloth_mask, file_name)
-                
+                    
             output = xops.memory_efficient_attention(q, k, v, attn_bias=None)
             
             output = (

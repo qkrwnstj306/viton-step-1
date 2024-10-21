@@ -31,7 +31,6 @@ def arguments():
     parser.add_argument('--paired', type=str2bool, default=True)
     parser.add_argument('--blending', type=str2bool, default=False)
     parser.add_argument('--save_dir', type=str, default='./outputs/epoch-0')
-    parser.add_argument('-s', '--seed', type=int, default=-1)
     
     # attribution map visualization
     parser.add_argument('--generated_image', type=str2bool, default=True)
@@ -54,7 +53,8 @@ def arguments():
     parser.add_argument('-ng', '--n_gpus', type=int, default=2)
     parser.add_argument('--cfg_scale', type=float, default=5) # if set 1, only use cond 
     parser.add_argument('--parameterization', type=str, default='eps') # v
-    parser.add_argument('--rescale', type=float, default=0.0) # 0이면 그냥 CFG, 
+    parser.add_argument('--rescale', type=float, default=0.0) # 0이면 그냥 CFG,
+    parser.add_argument('-s', '--seed', type=int, default=23) 
     
     # debugging
     parser.add_argument('--debugging', type=str2bool, default=False)

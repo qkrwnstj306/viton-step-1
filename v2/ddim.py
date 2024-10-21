@@ -92,8 +92,8 @@ class DDIMSampler:
         # cloth_embeddings, person_embeddings: [batch_size, 1037, 768]
         
         # t: [batch_size]
-        t = torch.randint(self.T, generator=self.generator, size=(x_0.shape[0],))
-        
+        t = torch.randint(self.T, size=(x_0.shape[0],))
+
         for index, time in enumerate(t):
             if index == 0:
                 temp = self.get_time_embedding(time)

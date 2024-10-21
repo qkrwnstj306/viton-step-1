@@ -41,7 +41,7 @@ def setting():
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
    
-    ckpt_pth = './weights/v/epoch=36-step=13468.ckpt'
+    ckpt_pth = './weights/eps/attn_loss/epoch=149-step=46228.ckpt'
     models = model_loader.load_models_from_fine_tuned_weights(ckpt_pth, 'cpu')
     logger.info("MODEL LOAD COMPLETE...!")
 
@@ -99,7 +99,7 @@ def main_worker(args, models, data_module):
         
         if hook.specific_reference_attribution_maps:
             for idx in range(len(attention_maps)):
-                hook.make_specific_reference_attribution_maps(clamp_predicted_image, batch['cloth'], attention_maps[idx], save_dir, f"{batch_idx}-{idx}")
+                hook.make_specific_reference_attribution_maps(clamp_predicted_image, batch['cloth'], attention_maps[idx], save_dir, f"{batch_idx}-{idx}", batch['img_fn'][0].split('.')[0])
         
         elif hook.cal_IMACS:
             IMACS += hook.make_images(clamp_predicted_image, batch['cloth'], attention_maps, save_dir, f"{batch_idx}", batch['agn_mask'], batch['cloth_mask'])

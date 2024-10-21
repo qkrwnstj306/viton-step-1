@@ -74,8 +74,8 @@ class LiTModel(pl.LightningModule):
             
             encoder_inputs = torch.cat((input_image, cloth_agnostic_mask, densepose, cloth), dim=0)
             
-            encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH), generator=self.generator)
-            
+            encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH))
+
             input_image_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents = \
                 torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 4, dim=0)
 
@@ -131,7 +131,7 @@ class LiTModel(pl.LightningModule):
         
     def configure_optimizers(self):
         params = list(self.mlp.parameters())
-        
+ 
         if self.args.do_cfg:
             params.append(self.diffusion.uncond_vector)
         
@@ -203,7 +203,7 @@ class LiTModel(pl.LightningModule):
         
         encoder_inputs = torch.cat((cloth_agnostic_mask, densepose, cloth), dim=0)
         
-        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH), generator=self.generator)
+        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH))
         
         cloth_agnostic_mask_latents, densepose_latents, cloth_latents = \
             torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 3, dim=0)
@@ -222,7 +222,7 @@ class LiTModel(pl.LightningModule):
         # [batch_size * 2, 1037, 1536] -> [batch_size, 1037, 768], [batch_size, 1037, 768]
         image_embeddings = self.mlp(image_embeddings)
                         
-        x_T = torch.randn(self.latent_shape, generator=self.generator).to("cuda")
+        x_T = torch.randn(self.latent_shape).to("cuda")
         
         CFG = True if np.random.rand(1)[0] < 0.5 and self.args.do_cfg else False # Can generates either cfg/None
     

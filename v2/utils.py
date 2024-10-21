@@ -22,6 +22,21 @@ def count_params(model, verbose=False):
         print(f"{model.__class__.__name__} has {total_params*1.e-6:.2f} M params.")
     return total_params
 
+def save_binary_images(tensor, save_path):
+    """
+    tensor: [BS, H, W]
+    """
+    # NumPy 배열로 변환
+    img_array = tensor.detach().cpu().numpy()  # [BS, H, W]
+    
+    # 임계값을 기준으로 이진화 (0~1)
+    binary_array = (img_array > 0.5).astype(np.uint8)  
+    
+    # 배치 크기만큼 이미지 저장
+    for i in range(binary_array.shape[0]):
+        img = Image.fromarray(binary_array[i] * 255)  # 이진 이미지를 PIL 형식으로 변환하고 스케일링
+        img.save(f"{save_path}_warped_cloth_mask_{i}.png")  # 이미지 저장
+
 def tensor2img(x):
     '''
     x : [BS x c x H x W] or [c x H x W]

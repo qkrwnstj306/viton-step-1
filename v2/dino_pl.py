@@ -2,6 +2,7 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning import loggers
 from pytorch_lightning.strategies.ddp import DDPStrategy
+from pytorch_lightning import seed_everything
 
 import logging
 import coloredlogs
@@ -50,7 +51,7 @@ def setting():
 def main_worker(args, models, data_module):
 
     # Model Setting 
-
+    seed_everything(args.seed)
     diffusion = models["diffusion"]
     dinov2 = models["dinov2"]
     mlp = models["mlp"]     
@@ -60,7 +61,7 @@ def main_worker(args, models, data_module):
     # Train and Validate 
     model = LiTModel(diffusion, mlp, dinov2, decoder, encoder,args)
     del models
-
+    
     tb_logger = loggers.TensorBoardLogger('./logs')
     
     checkpoint_callback = model_checkpoint_setting()
@@ -68,7 +69,7 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/epoch=85-step=31304.ckpt'
+        resume_from_checkpoint = './weights/eps/epoch=199-step=52052.ckpt'
     else:
         resume_from_checkpoint = None
     trainer = pl.Trainer(gpus=args.n_gpus,
@@ -81,7 +82,7 @@ def main_worker(args, models, data_module):
                         strategy='ddp',
                         logger=tb_logger,
                         )
-
+    
     trainer.fit(model=model, datamodule=data_module)
 
 

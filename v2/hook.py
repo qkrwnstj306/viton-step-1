@@ -70,7 +70,7 @@ class CrossAttentionHook(nn.Module):
         
         return IMACS 
     
-    def make_specific_reference_attribution_maps(self, input_image, cloth, attention_maps, save_dir, batch_idx):
+    def make_specific_reference_attribution_maps(self, input_image, cloth, attention_maps, save_dir, batch_idx, img_name):
         with torch.cuda.amp.autocast(dtype=torch.float32):
             # input_image: [1, 3, 512, 384]
             # cloth_image: [1, 3, 512, 384]
@@ -101,7 +101,7 @@ class CrossAttentionHook(nn.Module):
 
             heat_map = cv2.addWeighted(cloth_image, 0.7, resized_attention_maps, 0.5, 0)
             
-            attention_map_dir = f"{save_dir}/specific"
+            attention_map_dir = f"{save_dir}/specific_{img_name}"
             os.makedirs(attention_map_dir, exist_ok=True)
             
             plt.imshow(input_image)
