@@ -7,6 +7,7 @@ from dataset import MyTrainDataset, collate_fn
 import torch.nn as nn
 from torchvision import transforms
 from torchvision.utils import make_grid, save_image
+from pytorch_lightning import seed_everything
 
 import logging
 import coloredlogs
@@ -36,6 +37,7 @@ def setting():
     # Load Arguments 
 
     args = arguments()
+    seed_everything(args.seed)
 
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
