@@ -233,6 +233,7 @@ class MyTrainDataset(Dataset):
             cloth = transformed_color["cloth"]
             
             agn_mask = 255 - agn_mask
+            # agmentation으로 인한 masking 영역을 다시 회색으로...
             cloth_agnostic_mask = cloth_agnostic_mask * agn_mask[:,:,None].astype(np.float32)/255.0 + 128 * (1 - agn_mask[:,:,None].astype(np.float32)/255.0) 
             
             input_image = norm_for_albu(input_image)

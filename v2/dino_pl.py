@@ -30,7 +30,7 @@ def setting():
     # Load Arguments 
 
     args = arguments()
-
+    seed_everything(args.seed)
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
     if args.resume == False:
@@ -51,7 +51,6 @@ def setting():
 def main_worker(args, models, data_module):
 
     # Model Setting 
-    seed_everything(args.seed)
     diffusion = models["diffusion"]
     dinov2 = models["dinov2"]
     mlp = models["mlp"]     
@@ -69,7 +68,7 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/eps/epoch=199-step=52052.ckpt'
+        resume_from_checkpoint = './weights/eps/epoch=188-step=34398.ckpt'
     else:
         resume_from_checkpoint = None
     trainer = pl.Trainer(gpus=args.n_gpus,

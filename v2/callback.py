@@ -18,7 +18,7 @@ def model_checkpoint_setting():
         dirpath=f'./weights/{args.weight_dir}/',
         filename='{epoch}-{step}',
         save_top_k=-1,
-        every_n_epochs=1,
+        every_n_epochs=5,
         verbose=True,
         save_on_train_epoch_end=True
     )

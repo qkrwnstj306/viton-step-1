@@ -87,7 +87,7 @@ def main_worker(args, models, data_module):
             
             # range: [0, 255], dim: [512, 384, 3], type: numpy
             # input_image range:[-1, 1], dim: [3, 512, 384], type: torch
-            # agn_mask range:[0, 1], dim: [1, 512, 384], type: torch, inference 시에는 agn_mask 가 inversion 되어있지 않다.
+            # agn_mask range:[0, 1], dim: [1, 512, 384], type: torch, agn_mask는 masked region의 값이 1이다.
             predicted_image = tensor2img(predicted_image)
             
             if args.blending:
