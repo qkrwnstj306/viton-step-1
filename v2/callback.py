@@ -12,15 +12,29 @@ args = arguments()
 def lr_monitor_setting():
     return LearningRateMonitor(logging_interval='epoch')
 
-def model_checkpoint_setting():
+# def model_checkpoint_setting():
 
-    return ModelCheckpoint(
+#     return ModelCheckpoint(
+#         dirpath=f'./weights/{args.weight_dir}/',
+#         filename='{epoch}-{step}',
+#         save_top_k=-1,
+#         every_n_epochs=5,
+#         verbose=True,
+#         save_on_train_epoch_end=True
+#     )
+
+class CustomCheckpoint(ModelCheckpoint):
+    def on_train_epoch_end(self, trainer, pl_module):
+        # 현재 에포크가 5의 배수일 때만 체크포인트를 저장
+        if (trainer.current_epoch) % 5 == 0:  # +1은 0-based 인덱스 처리
+            super().on_train_epoch_end(trainer, pl_module)
+
+def model_checkpoint_setting():
+    return CustomCheckpoint(
         dirpath=f'./weights/{args.weight_dir}/',
         filename='{epoch}-{step}',
         save_top_k=-1,
-        every_n_epochs=5,
         verbose=True,
-        save_on_train_epoch_end=True
     )
 
 class SaveImageCallback(Callback):

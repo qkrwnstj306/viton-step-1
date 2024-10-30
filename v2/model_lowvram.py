@@ -18,6 +18,10 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
+'''
+GPU 용량이 부족하다면 model.py대신 model_lowvram.py를 사용하면 된다. 
+from model_lowvram import LiTModel
+'''
 
 class LiTModel(pl.LightningModule):
 
@@ -27,9 +31,9 @@ class LiTModel(pl.LightningModule):
         
         self.diffusion = diffusion
         self.mlp = mlp
-        self.dinov2 = dinov2
-        self.decoder = decoder
-        self.encoder = encoder
+        self.dinov2 = dinov2.to("cpu")
+        self.decoder = decoder.to("cpu")
+        self.encoder = encoder.to("cpu")
         
         self.generator = torch.Generator()
         self.args = args
@@ -54,6 +58,7 @@ class LiTModel(pl.LightningModule):
         # print([param for param in model.parameters() if param.requires_grad])
 
         with torch.no_grad():
+            self.encoder.to("cuda")
             
             input_image = batch['input_image'] # [batch_size, 3, 512, 384]  
             cloth_agnostic_mask = batch['cloth_agnostic_mask'] # [batch_size, 3, 512, 384]
@@ -78,8 +83,12 @@ class LiTModel(pl.LightningModule):
             input_image_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents = \
                 torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 4, dim=0)
 
+            self.encoder.to("cpu")
+
+            self.dinov2.to("cuda")
             # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
             image_embeddings = self.dinov2(cloth_for_image_encoder)
+            self.dinov2.to("cpu")
         
         del cloth_agnostic_mask, densepose, cloth,  
         cloth_for_image_encoder, encoder_inputs, encoder_noise
@@ -180,7 +189,7 @@ class LiTModel(pl.LightningModule):
     
     def log_images(self, batch, batch_idx):
         
-
+        self.encoder.to("cuda")
         
         input_image = batch['input_image'].to('cpu') # [batch_size, 3, 512, 384]  
         cloth_agnostic_mask = batch['cloth_agnostic_mask'] # [batch_size, 3, 512, 384]
@@ -203,8 +212,12 @@ class LiTModel(pl.LightningModule):
         cloth_agnostic_mask_latents, densepose_latents, cloth_latents = \
             torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 3, dim=0)
 
+        self.encoder.to("cpu")
+        
         # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
+        self.dinov2.to("cuda")
         image_embeddings = self.dinov2(cloth_for_image_encoder)
+        self.dinov2.to("cpu")
     
         del cloth_for_image_encoder, encoder_noise, encoder_inputs
         torch.cuda.empty_cache()
@@ -220,7 +233,9 @@ class LiTModel(pl.LightningModule):
         x_0 = self.sampler.DDIM_sampling(self.diffusion, x_T, cloth_agnostic_mask_latents,
                                          densepose_latents, cloth_latents, resized_agn_mask, image_embeddings, do_cfg=CFG)
         
+        self.decoder.to("cuda")
         predicted_images = self.decoder(x_0).to("cpu")
+        self.decoder.to("cpu")
         
         cloth_agnostic_mask, densepose, cloth = cloth_agnostic_mask.to('cpu'), densepose.to('cpu'), cloth.to('cpu')
         
