@@ -18,6 +18,13 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
+'''
+GPU 용량이 부족하다면 model.py대신 model_lowvram.py를 사용하면 된다. 
+from model_lowvram import LiTModel
+
++ model.py에 del, torch.cuda.empty_cache(), gc.collect() 함수가 사용되는데 이는 학교 서버로 돌려도 cuda out of memory가 나서 사용한다.
+'''
+
 
 class LiTModel(pl.LightningModule):
 
@@ -81,6 +88,11 @@ class LiTModel(pl.LightningModule):
             # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
             image_embeddings = self.dinov2(cloth_for_image_encoder)
 
+        del cloth_agnostic_mask, densepose, cloth,  
+        cloth_for_image_encoder, encoder_inputs, encoder_noise
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         # [batch_size * 2, 1037, 1536] -> [batch_size, 1037, 768], [batch_size, 1037, 768]
         image_embeddings = self.mlp(image_embeddings)
         
@@ -111,7 +123,11 @@ class LiTModel(pl.LightningModule):
             self.log('pixel_l2', pixel_l2_loss, on_step=True, prog_bar=True, logger=True)
             self.log('naive', naive_loss, on_step=True, prog_bar=True, logger=True)
             loss = naive_loss + pixel_tv_loss + pixel_l2_loss 
- 
+
+        del image_embeddings, input_image_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         return loss
         
     def configure_optimizers(self):
@@ -196,6 +212,10 @@ class LiTModel(pl.LightningModule):
         # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
         image_embeddings = self.dinov2(cloth_for_image_encoder)
         
+        del cloth_for_image_encoder, encoder_noise, encoder_inputs
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         # [batch_size * 2, 1037, 1536] -> [batch_size, 1037, 768], [batch_size, 1037, 768]
         image_embeddings = self.mlp(image_embeddings)
                         
@@ -210,5 +230,8 @@ class LiTModel(pl.LightningModule):
         
         cloth_agnostic_mask, densepose, cloth = cloth_agnostic_mask.to('cpu'), densepose.to('cpu'), cloth.to('cpu')
         
+        del x_0, x_T, image_embeddings, resized_agn_mask
+        torch.cuda.empty_cache()
+        gc.collect()
         return input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, CFG
         

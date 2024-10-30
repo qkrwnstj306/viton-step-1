@@ -18,11 +18,6 @@ HEIGHT = 512
 LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
-'''
-GPU 용량이 부족하다면 model.py대신 model_lowvram.py를 사용하면 된다. 
-from model_lowvram import LiTModel
-'''
-
 class LiTModel(pl.LightningModule):
 
     def __init__(self, diffusion, mlp, dinov2, decoder, encoder,
