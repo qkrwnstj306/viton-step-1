@@ -2,6 +2,7 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning import loggers
 from pytorch_lightning.strategies.ddp import DDPStrategy
+from pytorch_lightning import seed_everything
 
 import logging
 import coloredlogs
@@ -29,7 +30,8 @@ def setting():
     # Load Arguments 
 
     args = arguments()
-
+    seed_everything(args.seed)
+    
     # Load Parameter of SDv1.5
     logger.info("STATE DICT LOAD...!")
     model_file = './v2/weights/eps/epoch=95-step=34944.ckpt'

@@ -30,18 +30,19 @@ LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
 """
-CUDA_VISIBLE_DEVICES=0 python inference.py --seed 0 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
+CUDA_VISIBLE_DEVICES=2 python inference_all_ckpt.py --seed 23 --paired True --batch_size 4
 """
 
-def setting():
+def setting(weight="epoch=0-step=0.ckpt"):
     # Load Arguments 
 
     args = arguments()
     seed_everything(args.seed)
+    args.save_dir = "./outputs/" + weight.split("-")[0].replace("=", "-")
 
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
-    ckpt_pth = './weights/eps/epoch=65-step=15834.ckpt'
+    ckpt_pth = f'./weights/eps/eps_23/eps/{weight}'
     models = model_loader.load_models_from_fine_tuned_weights(ckpt_pth, 'cpu')
     logger.info("MODEL LOAD COMPLETE...!")
 
@@ -104,5 +105,23 @@ def main_worker(args, models, data_module):
             cv2.imwrite(save_pth, predicted_image[:,:,::-1])
 
 if __name__ == "__main__":
-    args, models, data_module = setting()
-    main_worker(args, models, data_module)
+    folder_path = './weights/eps/eps_23/eps'
+    ckpt_files = [f for f in os.listdir(folder_path) if f.endswith('.ckpt')]
+    
+    # 파일 이름에 포함된 숫자가 5의 배수인지 확인하는 필터링 조건 추가
+    import re
+    ckpt_files = [
+        ckpt for ckpt in ckpt_files
+        if re.search(r'epoch=(\d+)-step=\d+\.ckpt', ckpt) and int(re.search(r'epoch=(\d+)-step=\d+\.ckpt', ckpt).group(1)) % 5 == 0
+    ]
+    print(ckpt_files)
+    for ckpt in ckpt_files:
+        args, models, data_module = setting(ckpt)
+        is_paired = "paired"
+        if not args.paired:
+            is_paired = "unpaired"
+        if os.path.exists(args.save_dir + f'/{is_paired}/cfg_{args.cfg_scale}') and os.path.isdir(args.save_dir + f'/{is_paired}/cfg_{args.cfg_scale}'):
+            print(f"디렉터리 '{args.save_dir}:{is_paired}'가 존재합니다.")
+            continue
+        
+        main_worker(args, models, data_module)

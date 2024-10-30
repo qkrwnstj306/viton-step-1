@@ -219,7 +219,7 @@ class UNET(nn.Module):
                 nn.SiLU(),
                 self.zero_module(self.conv_nd(256, 320, 3, padding=1))
             )
-        else: 
+        else: # Encoder 
             self.input_hint = SwitchSequential(self.zero_module(self.conv_nd(4, 320, 1, padding=0)))
         
         self.encoders = nn.ModuleList([

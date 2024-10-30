@@ -7,6 +7,7 @@ import torch.nn as nn
 from torchvision import transforms
 from torchvision.utils import make_grid, save_image
 import cv2
+from pytorch_lightning import seed_everything
 
 import logging
 import coloredlogs
@@ -30,14 +31,15 @@ LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
 """
-CUDA_VISIBLE_DEVICES=1 python attention_inference.py --generated_image False --specific_reference_attribution_maps True --patch_index 6 --save_dir ./outputs/epoch-81-gram --only_one_data True --certain_data_idx 00273_00.jpg --seed 0
+CUDA_VISIBLE_DEVICES=1 python attention_inference.py --generated_image False --specific_reference_attribution_maps True --patch_index {6, 7, 8} --save_dir ./outputs/epoch-0 --only_one_data True --certain_data_idx 00865_00.jpg --seed 23
 """
 
 def setting():
     # Load Arguments 
 
     args = arguments()
-
+    seed_everything(args.seed)
+    
     # Load Parameter of SDv1.5
     logger.info("MODEL LOAD...!")
    

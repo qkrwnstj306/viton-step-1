@@ -27,9 +27,9 @@ class LiTModel(pl.LightningModule):
         
         self.diffusion = diffusion
         self.mlp = mlp
-        self.dinov2 = dinov2
-        self.decoder = decoder
-        self.encoder = encoder
+        self.dinov2 = dinov2.to("cpu")
+        self.decoder = decoder.to("cpu")
+        self.encoder = encoder.to("cpu")
         
         self.generator = torch.Generator()
         self.args = args
@@ -56,6 +56,7 @@ class LiTModel(pl.LightningModule):
         # print([param for param in model.parameters() if param.requires_grad])
 
         with torch.no_grad():
+            self.encoder.to("cuda")
             
             input_image = batch['input_image'] # [batch_size, 3, 512, 384]  
             cloth_agnostic_mask = batch['cloth_agnostic_mask'] # [batch_size, 3, 512, 384]
@@ -88,10 +89,20 @@ class LiTModel(pl.LightningModule):
             else:
                 input_image_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents, canny = \
                     torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 5, dim=0)
+                    
+
+            self.encoder.to("cpu")
             
             # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
+            self.dinov2.to("cuda")
             image_embeddings = self.dinov2(cloth_for_image_encoder)
+            self.dinov2.to("cpu")
             
+            del cloth_agnostic_mask, densepose, cloth
+            cloth_for_image_encoder, encoder_inputs, encoder_noise
+            torch.cuda.empty_cache()
+            gc.collect()
+        
         # [batch_size * 2, 1037, 1536] -> [batch_size, 1037, 768], [batch_size, 1037, 768]
         image_embeddings = self.mlp(image_embeddings)
         
@@ -108,6 +119,10 @@ class LiTModel(pl.LightningModule):
         self.log('pixel_l2', pixel_l2_loss, on_step=True, prog_bar=True, logger=True)
         self.log('naive', naive_loss, on_step=True, prog_bar=True, logger=True)
         loss = naive_loss + pixel_tv_loss + pixel_l2_loss 
+        
+        del image_embeddings, input_image_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents
+        torch.cuda.empty_cache()
+        gc.collect()
         
         return loss
         
@@ -138,6 +153,8 @@ class LiTModel(pl.LightningModule):
     
     def log_images(self, batch, batch_idx):
         
+        self.encoder.to("cuda")
+        
         input_image = batch['input_image'].to('cpu') # [batch_size, 3, 512, 384]  
         cloth_agnostic_mask = batch['cloth_agnostic_mask'] # [batch_size, 3, 512, 384]
         densepose = batch['densepose'] # [batch_size, 3, 512, 384] 
@@ -166,10 +183,18 @@ class LiTModel(pl.LightningModule):
         else:
             cloth_agnostic_mask_latents, densepose_latents, cloth_latents, canny = \
                 torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 4, dim=0)
+                
+        self.encoder.to("cpu")
         
         # [batch_size * 2, 3, 518, 392] -> [batch_size * 2, 1037, 1536]
+        self.dinov2.to("cuda")
         image_embeddings = self.dinov2(cloth_for_image_encoder)
-
+        self.dinov2.to("cpu")
+    
+        del cloth_for_image_encoder, encoder_noise, encoder_inputs
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         # [batch_size * 2, 1037, 1536] -> [batch_size, 1037, 768], [batch_size, 1037, 768]
         image_embeddings = self.mlp(image_embeddings)
                         
@@ -181,9 +206,14 @@ class LiTModel(pl.LightningModule):
                                             densepose_latents, cloth_latents, resized_agn_mask, canny,
                                             image_embeddings, do_cfg=CFG)
         
+        self.decoder.to("cuda")
         predicted_images = self.decoder(x_0).to("cpu")
+        self.decoder.to("cpu")
         
         cloth_agnostic_mask, densepose, cloth, canny = cloth_agnostic_mask.to('cpu'), densepose.to('cpu'), cloth.to('cpu'), canny.to('cpu')
         
+        del x_0, x_T, image_embeddings
+        torch.cuda.empty_cache()
+        gc.collect()
         return input_image, predicted_images, cloth_agnostic_mask, densepose, cloth, canny, CFG
         

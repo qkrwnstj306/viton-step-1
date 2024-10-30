@@ -36,6 +36,8 @@ class DDIMSampler:
         self.tau = 20 # uniform - time step 을 몇 번 건너 뛸 건지 / exp - time step 을 몇 번 거쳐서 생성할 건지
 
         self.eta = 0 
+        
+        self.pixel_loss = PixelLoss()
     
     def enforce_zero_terminal_snr(self, betas):
         # Convert betas to alphas_bar_sqrt
@@ -87,10 +89,9 @@ class DDIMSampler:
         # x_T: [batch_size, 4, Height / 8, Width / 8]
         # person_agnostic_mask, densepose, cloth, cloth_mask: [batch_size, 4, Height / 8, Width / 8]
         # cloth_embeddings, person_embeddings: [batch_size, 1037, 768]
-        # Decoupled condition: cloth_embeddings -> SD, person_embeddings -> ControlNet
         
         # t: [batch_size]
-        t = torch.randint(self.T, generator=self.generator, size=(x_0.shape[0],))
+        t = torch.randint(self.T, size=(x_0.shape[0],))
         
         for index, time in enumerate(t):
             if index == 0:
@@ -115,11 +116,17 @@ class DDIMSampler:
         elif self.parameterization == "v":
             target = self.get_v(x_0, eps, t)
         loss = F.mse_loss(predicted_eps, target.to("cuda"))
+        
+        pixel_tv_loss, pixel_l2_loss = torch.tensor(0, dtype=x_t.dtype, device=x_t.device), torch.tensor(0, dtype=x_t.dtype, device=x_t.device)
+        if not model.probabilities < model.p_uncond and decoder is not None:
+            latent_predicted_x0 = (x_t - torch.sqrt(1 - self.gather_and_expand(self.alphas_bar.to("cuda"), t.to("cuda"), x_0.shape)) * predicted_eps) / torch.sqrt(self.gather_and_expand(self.alphas_bar.to("cuda"), t.to("cuda"), x_0.shape))
+            pixel_tv_loss, pixel_l2_loss = self.pixel_loss(decoder, latent_predicted_x0, input_image, t)
+            del latent_predicted_x0
 
         del x_t
         gc.collect()
         torch.cuda.empty_cache()
-        return loss
+        return loss, pixel_tv_loss, pixel_l2_loss
     
     def _get_process_scheduling(self, reverse = True):
         if self.scheduling == 'uniform':
@@ -217,4 +224,37 @@ class DDIMSampler:
         # Shape: (1, 160 * 2)
         return torch.cat([torch.cos(x), torch.sin(x)], dim=-1)
 
+class PixelLoss(nn.Module):
+    def __init__(self):
+        super(PixelLoss, self).__init__()
+        
+        self.tv_strength = 0.0001 #0.000001 
+        self.l2_strength = 0.01
+        
+    def forward(self, decoder, pred, gt, t):
+        # [BS, C, H, W]
+        pred = decoder(pred)
+        
+        tv_loss = self.tv_loss(pred)
+        l2_loss = self.l2_loss(pred, gt)
+        #logger.info(f"Time Step: {t}")
+        if t == 0:
+            t = torch.tensor(1)
+        sqrt_t = torch.sqrt(t.to("cuda") + 1e-8)
+        tv_loss, l2_loss = tv_loss * self.tv_strength, l2_loss * self.l2_strength * sqrt_t
+        
+        return tv_loss, l2_loss
+        
+    def tv_loss(self, pred):
+        # pred: [BS, 3, 512, 384]
+        BS, C, H, W = pred.size()
+        tv_y = torch.abs(pred[:, :, 1:, :] - pred[:,:, :-1, :])
+        tv_x = torch.abs(pred[:, :, :, 1:] - pred[:,:,:, :-1])
+        
+        loss = (tv_y.sum() + tv_x.sum()) / (BS * C * H * W)
+        
+        return loss
     
+    def l2_loss(self, pred, gt):
+        mse_loss = nn.MSELoss()
+        return mse_loss(pred, gt)

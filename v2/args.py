@@ -45,12 +45,12 @@ def arguments():
     parser.add_argument('--cloth_forcing', type=str2bool, default=False) 
     # 오직 하나의 데이터에 대해서만 attention inference
     parser.add_argument('--only_one_data', type=str2bool, default=False) 
-    parser.add_argument('--certain_data_idx', type=str, default="00273_00.jpg") 
+    parser.add_argument('--certain_data_idx', type=str, default="00865_00.jpg") 
     
     # train & inference
     parser.add_argument('-bs', '--batch_size', type=int, default=1)
     parser.add_argument('-cfg', '--do_cfg', type=str2bool, default=True)
-    parser.add_argument('-ng', '--n_gpus', type=int, default=2)
+    parser.add_argument('-ng', '--n_gpus', type=int, default=4)
     parser.add_argument('--cfg_scale', type=float, default=5) # if set 1, only use cond 
     parser.add_argument('--parameterization', type=str, default='eps') # v
     parser.add_argument('--rescale', type=float, default=0.0) # 0이면 그냥 CFG,

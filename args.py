@@ -21,16 +21,16 @@ def arguments():
     parser.add_argument('-w', '--batch_frequency', type=int, default=1000)
     parser.add_argument('-sc', '--scheduler', type=str2bool, default=False)
     parser.add_argument('--tb_save_dir', type=str, default='./log')
-    parser.add_argument('--sd_locked', type=str2bool, default=True)
-    parser.add_argument('--conv_hint', type=str2bool, default=True) # False면 controlnet input의 channel을 3으로 조정해야한다.
+    parser.add_argument('--sd_locked', type=str2bool, default=True) # Step 1에서의 sd_locked과는 다르다.
+    parser.add_argument('--conv_hint', type=str2bool, default=True) # False면 Conv가 아닌 Encoder를 통과시켜야 해서, controlnet input의 channel을 3으로 조정해야한다.
     parser.add_argument('--resume', type=str2bool, default=False)
     parser.add_argument('--weight_dir', type=str, default='eps')
+    parser.add_argument('--use_pixel_loss', type=str2bool, default=False)
     
     # all inference 
     parser.add_argument('--paired', type=str2bool, default=True)
     parser.add_argument('--blending', type=str2bool, default=False)
     parser.add_argument('--save_dir', type=str, default='./outputs/epoch-0')
-    parser.add_argument('-s', '--seed', type=int, default=-1)
     
     # attribution map visualization
     parser.add_argument('--generated_image', type=str2bool, default=True)
@@ -45,15 +45,16 @@ def arguments():
     parser.add_argument('--cloth_forcing', type=str2bool, default=False) 
     # 오직 하나의 데이터에 대해서만 attention inference
     parser.add_argument('--only_one_data', type=str2bool, default=False) 
-    parser.add_argument('--certain_data_idx', type=str, default="00273_00.jpg") 
+    parser.add_argument('--certain_data_idx', type=str, default="00865_00.jpg") 
     
     # train & inference
     parser.add_argument('-bs', '--batch_size', type=int, default=1)
     parser.add_argument('-cfg', '--do_cfg', type=str2bool, default=True)
-    parser.add_argument('-ng', '--n_gpus', type=int, default=1)
+    parser.add_argument('-ng', '--n_gpus', type=int, default=4)
     parser.add_argument('--cfg_scale', type=float, default=5) # if set 1, only use cond 
     parser.add_argument('--parameterization', type=str, default='eps') # v, eps 
     parser.add_argument('--rescale', type=float, default=0.0) # 0이면 그냥 CFG, 
+    parser.add_argument('-s', '--seed', type=int, default=23)
     
     # debugging
     parser.add_argument('--debugging', type=str2bool, default=False)

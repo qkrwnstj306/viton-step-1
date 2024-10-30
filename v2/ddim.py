@@ -250,36 +250,36 @@ class DDIMSampler:
 
 
 class PixelLoss(nn.Module):
-        def __init__(self):
-            super(PixelLoss, self).__init__()
-            
-            self.tv_strength = 0.0001 #0.000001 
-            self.l2_strength = 0.01
-            
-        def forward(self, decoder, pred, gt, t):
-            # [BS, C, H, W]
-            pred = decoder(pred)
-            
-            tv_loss = self.tv_loss(pred)
-            l2_loss = self.l2_loss(pred, gt)
-            #logger.info(f"Time Step: {t}")
-            if t == 0:
-                t = torch.tensor(1)
-            sqrt_t = torch.sqrt(t.to("cuda") + 1e-8)
-            tv_loss, l2_loss = tv_loss * self.tv_strength, l2_loss * self.l2_strength * sqrt_t
-            
-            return tv_loss, l2_loss
-            
-        def tv_loss(self, pred):
-            # pred: [BS, 3, 512, 384]
-            BS, C, H, W = pred.size()
-            tv_y = torch.abs(pred[:, :, 1:, :] - pred[:,:, :-1, :])
-            tv_x = torch.abs(pred[:, :, :, 1:] - pred[:,:,:, :-1])
-            
-            loss = (tv_y.sum() + tv_x.sum()) / (BS * C * H * W)
-            
-            return loss
+    def __init__(self):
+        super(PixelLoss, self).__init__()
         
-        def l2_loss(self, pred, gt):
-            mse_loss = nn.MSELoss()
-            return mse_loss(pred, gt)
+        self.tv_strength = 0.0001 #0.000001 
+        self.l2_strength = 0.01
+        
+    def forward(self, decoder, pred, gt, t):
+        # [BS, C, H, W]
+        pred = decoder(pred)
+        
+        tv_loss = self.tv_loss(pred)
+        l2_loss = self.l2_loss(pred, gt)
+        #logger.info(f"Time Step: {t}")
+        if t == 0:
+            t = torch.tensor(1)
+        sqrt_t = torch.sqrt(t.to("cuda") + 1e-8)
+        tv_loss, l2_loss = tv_loss * self.tv_strength, l2_loss * self.l2_strength * sqrt_t
+        
+        return tv_loss, l2_loss
+        
+    def tv_loss(self, pred):
+        # pred: [BS, 3, 512, 384]
+        BS, C, H, W = pred.size()
+        tv_y = torch.abs(pred[:, :, 1:, :] - pred[:,:, :-1, :])
+        tv_x = torch.abs(pred[:, :, :, 1:] - pred[:,:,:, :-1])
+        
+        loss = (tv_y.sum() + tv_x.sum()) / (BS * C * H * W)
+        
+        return loss
+    
+    def l2_loss(self, pred, gt):
+        mse_loss = nn.MSELoss()
+        return mse_loss(pred, gt)
