@@ -142,7 +142,7 @@ class DDIMSampler:
         return diffusion_process
 
     def DDIM_sampling(self, model, x_T, cloth_agnostic_mask,
-                      densepose, cloth, resized_agn_mask, canny, image_embeddings, do_cfg=True, img_callback=None, callback_interval=50):
+                      densepose, cloth, resized_agn_mask, canny, image_embeddings, x_0=None, do_cfg=True, img_callback=None, callback_interval=50):
         # x_T: [batch_size, 4, Height / 8, Width / 8]
         # person_agnostic_mask, densepose, cloth, cloth_mask: [batch_size, 4, Height / 8, Width / 8]
         # cloth_embeddings, person_embeddings: [batch_size, 1037, 768]
@@ -164,6 +164,14 @@ class DDIMSampler:
                 
                 # time_embedding: [1, 160 * 2]
                 time_embedding = self.get_time_embedding(time_step)
+                
+                if x_0 is not None: # replace generated background with GT background in latent denosing process
+                    assert resized_agn_mask is not None
+                    eps = torch.randn_like(x_0)
+                    noisy_x_orig = self.gather_and_expand(self.sqrt_alpha_bar.to("cuda"), idx.to("cuda"), x_0.shape) * x_0 \
+                        + self.gather_and_expand(self.sqrt_one_minus_alpha_bar.to("cuda"), idx.to("cuda"), x_0.shape) * eps.to("cuda")
+                    # masked region of resized_agn_mask set to 1
+                    x = noisy_x_orig * (1. - resized_agn_mask) + resized_agn_mask * x
                 
                 model_output = model(x, cloth_agnostic_mask, densepose, cloth, resized_agn_mask, canny,
                                 image_embeddings, time_embedding.to("cuda"), is_train=False, do_cfg=do_cfg)

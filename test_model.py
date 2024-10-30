@@ -62,19 +62,19 @@ class MyModel(nn.Module):
         cloth_for_image_encoder = self.temperal_image_transforms(cloth)
         
         if self.args.conv_hint:
-                encoder_inputs = torch.cat((cloth_agnostic_mask, densepose, cloth), dim=0)
+                encoder_inputs = torch.cat((input_image, cloth_agnostic_mask, densepose, cloth), dim=0)
                 
         else:
-            encoder_inputs = torch.cat((cloth_agnostic_mask, densepose, cloth, canny), dim=0)
+            encoder_inputs = torch.cat((input_image, cloth_agnostic_mask, densepose, cloth, canny), dim=0)
             
         encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH), generator=self.generator)
         
         if self.args.conv_hint:
-            cloth_agnostic_mask_latents, densepose_latents, cloth_latents= \
-                torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 3, dim=0)
-        else:
-            cloth_agnostic_mask_latents, densepose_latents, cloth_latents, canny = \
+            input_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents= \
                 torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 4, dim=0)
+        else:
+            input_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents, canny = \
+                torch.chunk(self.encoder(encoder_inputs, encoder_noise.to("cuda")), 5, dim=0)
             
         image_embeddings = self.dinov2(cloth_for_image_encoder)
         image_embeddings = self.mlp(image_embeddings)
@@ -84,7 +84,7 @@ class MyModel(nn.Module):
         CFG = True if self.args.do_cfg else False
         
         x_0 = self.sampler.DDIM_sampling(self.diffusion, x_T, cloth_agnostic_mask_latents,
-                                         densepose_latents, cloth_latents, resized_agn_mask, canny, image_embeddings, do_cfg=CFG)
+                                         densepose_latents, cloth_latents, resized_agn_mask, canny, image_embeddings, input_latents, do_cfg=CFG)
         
         predicted_images = self.decoder(x_0).to("cpu")
         cloth_agnostic_mask, densepose, cloth = cloth_agnostic_mask.to('cpu'), densepose.to('cpu'), cloth.to('cpu')
