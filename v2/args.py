@@ -17,7 +17,7 @@ def arguments():
     parser.add_argument('-lr', '--lr', type=float, default=1e-5)
     parser.add_argument('-e', '--n_epochs', type=int, default=1000)
     parser.add_argument('-fp16', '--do_fp16', type=str2bool, default=True)
-    parser.add_argument('-a', '--accumulation_steps', type=int, default=2)
+    parser.add_argument('-a', '--accumulation_steps', type=int, default=2) # 일반적으로는 bs: 32 (8 x 4 GPUs)로 학습하니 64 (32 x 2 a)의 batch_size로 생각 
     parser.add_argument('-w', '--batch_frequency', type=int, default=1001)
     parser.add_argument('-sc', '--scheduler', type=str2bool, default=False)
     parser.add_argument('--tb_save_dir', type=str, default='./log')
