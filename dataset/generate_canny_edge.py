@@ -26,7 +26,7 @@ def process_images(input_dir, output_dir):
 
 if __name__ == "__main__":
     # 입력 디렉토리와 출력 디렉토리 설정
-    dir_name = "test" # "test" or "train"
+    dir_name = "train" # "test" or "train"
 
     input_directory = f'./zalando-hd-resized/{dir_name}/cloth'  # 입력 디렉토리 경로
     output_directory = f'./zalando-hd-resized/{dir_name}/cloth_canny'  # 출력 디렉토리 경로

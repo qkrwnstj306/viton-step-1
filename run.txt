@@ -3,11 +3,12 @@ Step1 on 4 GPUs: CUDA_VISIBLE_DEVICES=0,1,2,3 python dino_pl.py \
 --resume False \
 --n_gpus 4 \
 --parameterization eps \
---batch_size 32
+--batch_size 32 \
+--accumulation_steps 2
 
 Step1 on 1 GPUs: CUDA_VISIBLE_DEVICES=0 python dino_pl.py \
 --resume False \
---n_gpus 4 \
+--n_gpus 1 \
 --parameterization eps \
 --batch_size 8 \
 --accumulation_steps 8
