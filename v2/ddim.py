@@ -157,6 +157,48 @@ class DDIMSampler:
         diffusion_process = zip(reversed(diffusion_process[:-1]), reversed(diffusion_process[1:])) if reverse else zip(diffusion_process[1:], diffusion_process[:-1])
         return diffusion_process
 
+    @torch.no_grad()
+    def invert(self, model, start_latents, cloth_agnostic_mask, densepose,
+            cloth, resized_agn_mask, image_embeddings, do_cfg, time_step, batch_size):
+        # time_embeddings 
+        pass
+        latents = start_latents.clone()
+        
+        diffusion_process = self._get_process_scheduling(reverse=False)
+        
+        for next_idx, current_idx in diffusion_process:
+            # Scalar 0 -> idx - 1
+            if current_idx == time_step: 
+                break
+            
+            time = current_idx
+            
+            # [batch_size], [batch_size]
+            current_idx = torch.Tensor([current_idx for _ in range(latents.size(0))]).long()
+            next_idx = torch.Tensor([next_idx for _ in range(latents.size(0))]).long()
+            
+            # time_embedding: [1, 160 * 2]
+            time_embedding = self.get_time_embedding(time)
+            
+            model_output = model(latents, cloth_agnostic_mask, densepose, cloth, resized_agn_mask, image_embeddings, time_embedding.to("cuda")
+                                , is_train=False, do_cfg=do_cfg, use_attention_loss=False)  
+            
+            if do_cfg:
+                # [batch_size, 4, Height / 8, Width / 8], [batch_size, 4, Height / 8, Width / 8]
+                output_cond, output_uncond = model_output.chunk(2)
+                model_output = self.cfg_scale * (output_cond - output_uncond) + output_uncond
+                
+            else:
+                pass
+            #breakpoint()
+            # current_idx > next_idx의 latents를 만들었다.
+            latents = (latents - torch.sqrt(1 - self.alphas_bar[current_idx].to("cuda").view(batch_size, 1, 1, 1)) * model_output) \
+                * (torch.sqrt(self.alphas_bar[next_idx].to("cuda").view(batch_size, 1, 1, 1)) / torch.sqrt(self.alphas_bar[current_idx].to("cuda").view(batch_size, 1, 1, 1))) + \
+                    torch.sqrt(1 - self.alphas_bar[next_idx].to("cuda").view(batch_size, 1, 1, 1)) * model_output
+            
+        return latents
+    
+    @torch.no_grad()
     def DDIM_sampling(self, model, x_T, cloth_agnostic_mask,
                       densepose, cloth, resized_agn_mask, image_embeddings, x_0=None, do_cfg=True, img_callback=None, callback_interval=50):
         # x_T: [batch_size, 4, Height / 8, Width / 8]
@@ -181,11 +223,19 @@ class DDIMSampler:
                 # time_embedding: [1, 160 * 2]
                 time_embedding = self.get_time_embedding(time_step)
                 
-                if x_0 is not None: # replace generated background with GT background in latent denosing process
+                # add DDIM inverison
+                if x_0 is not None:
                     assert resized_agn_mask is not None
                     eps = torch.randn_like(x_0)
+                    
+                    """ Make noisy original latents W/O DDIM inversion"""
                     noisy_x_orig = self.gather_and_expand(self.sqrt_alpha_bar.to("cuda"), idx.to("cuda"), x_0.shape) * x_0 \
                         + self.gather_and_expand(self.sqrt_one_minus_alpha_bar.to("cuda"), idx.to("cuda"), x_0.shape) * eps.to("cuda")
+                    
+                    """ Make noisy original latents W/ DDIM inversion (More execute time...)"""
+                    # noisy_x_orig = self.invert(model=model, start_latents=x_0, cloth_agnostic_mask=cloth_agnostic_mask, densepose=densepose,
+                    # cloth=cloth, resized_agn_mask=resized_agn_mask, image_embeddings=image_embeddings, do_cfg=do_cfg, time_step=time_step, batch_size=batch_size)
+                    
                     # masked region of resized_agn_mask set to 1
                     x = noisy_x_orig * (1. - resized_agn_mask) + resized_agn_mask * x
                 
