@@ -68,7 +68,7 @@ def main_worker(args, models, data_module):
     lr_monitor = lr_monitor_setting()
 
     if args.resume:
-        resume_from_checkpoint = './weights/baseline/epoch=470-step=85722.ckpt'
+        resume_from_checkpoint = './weights/eps/epoch=845-step=153972.ckpt'
     else:
         resume_from_checkpoint = None
     trainer = pl.Trainer(gpus=args.n_gpus,
