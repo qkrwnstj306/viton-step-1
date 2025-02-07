@@ -15,10 +15,10 @@ def arguments():
 
     # train
     parser.add_argument('-lr', '--lr', type=float, default=1e-5)
-    parser.add_argument('-e', '--n_epochs', type=int, default=150)
+    parser.add_argument('-e', '--n_epochs', type=int, default=200)
     parser.add_argument('-fp16', '--do_fp16', type=str2bool, default=True)
     parser.add_argument('-a', '--accumulation_steps', type=int, default=2)
-    parser.add_argument('-w', '--batch_frequency', type=int, default=1000)
+    parser.add_argument('-w', '--batch_frequency', type=int, default=1001)
     parser.add_argument('-sc', '--scheduler', type=str2bool, default=False)
     parser.add_argument('--tb_save_dir', type=str, default='./log')
     parser.add_argument('--sd_locked', type=str2bool, default=True) # Step 1에서의 sd_locked과는 다르다.

@@ -34,7 +34,7 @@ def setting():
     
     # Load Parameter of SDv1.5
     logger.info("STATE DICT LOAD...!")
-    model_file = './v2/weights/eps/epoch=95-step=34944.ckpt'
+    model_file = './v2/weights/eps/attn_loss/epoch=960-step=174902.ckpt'
     models = model_loader.preload_models_from_standard_weights(model_file, 'cpu')
     logger.info("STATE DICT LOAD COMPLETE...!")
 

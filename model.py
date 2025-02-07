@@ -101,7 +101,7 @@ class LiTModel(pl.LightningModule):
             is_decoder = self.decoder
         
         naive_loss, pixel_tv_loss, pixel_l2_loss = self.sampler.train(self.diffusion, input_image_latents, cloth_agnostic_mask_latents, 
-                                    densepose_latents, cloth_latents, resized_agn_mask, image_embeddings, do_cfg=self.args.do_cfg, 
+                                    densepose_latents, cloth_latents, resized_agn_mask, canny, image_embeddings, do_cfg=self.args.do_cfg, 
                                     decoder=is_decoder, input_image=input_image)
 
         self.log('pixel_tv', pixel_tv_loss, on_step=True, prog_bar=True, logger=True)
