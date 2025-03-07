@@ -6,7 +6,7 @@ Step1 on 4 GPUs: CUDA_VISIBLE_DEVICES=0,1,2,3 python dino_pl.py \
 --batch_size 32 \
 --accumulation_steps 2
 
-Step1 on 1 GPUs: CUDA_VISIBLE_DEVICES=0 python dino_pl.py \
+Step1 on 1 GPUs (48GB): CUDA_VISIBLE_DEVICES=0 python dino_pl.py \
 --resume False \
 --n_gpus 1 \
 --parameterization eps \
@@ -25,11 +25,11 @@ Step2: CUDA_VISIBLE_DEVICES=3,4,5,6 python pl.py \
 --n_gpus 4 \
 --batch_size 32
 
-Step2 on 1 GPUs: CUDA_VISIBLE_DEVICES=0 python pl.py \
+Step2 on 1 GPUs (48GB): CUDA_VISIBLE_DEVICES=0 python pl.py \
 --resume False \
 --n_gpus 1 \
---batch_size 8 \
---accumulation_steps 8
+--batch_size 4 \
+--accumulation_steps 16
 
 Pixel loss in Step2: CUDA_VISIBLE_DEVICES=3,4,5,6 python pl.py \
 --resume False \
