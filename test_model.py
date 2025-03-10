@@ -49,7 +49,7 @@ class MyModel(nn.Module):
     
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
-        input_image = batch['input_image'].to('cpu') # [batch_size, 3, 512, 384]  
+        input_image = batch['input_image'].to('cuda') # [batch_size, 3, 512, 384]  
         cloth_agnostic_mask = batch['cloth_agnostic_mask'].to('cuda') # [batch_size, 3, 512, 384]
         densepose = batch['densepose'].to('cuda') # [batch_size, 3, 512, 384] 
         cloth = batch['cloth'].to('cuda') # [batch_size, 3, 512, 384]
@@ -67,7 +67,7 @@ class MyModel(nn.Module):
         else:
             encoder_inputs = torch.cat((input_image, cloth_agnostic_mask, densepose, cloth, canny), dim=0)
             
-        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH), generator=self.generator)
+        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH))
         
         if self.args.conv_hint:
             input_latents, cloth_agnostic_mask_latents, densepose_latents, cloth_latents= \
@@ -79,7 +79,7 @@ class MyModel(nn.Module):
         image_embeddings = self.dinov2(cloth_for_image_encoder)
         image_embeddings = self.mlp(image_embeddings)
         
-        x_T = torch.randn(self.latent_shape, generator=self.generator).to("cuda")
+        x_T = torch.randn(self.latent_shape).to("cuda")
         
         CFG = True if self.args.do_cfg else False
         
@@ -139,7 +139,7 @@ class MyModel(nn.Module):
         
         encoder_inputs = torch.cat((cloth_agnostic_mask, densepose, cloth), dim=0)
         
-        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH), generator=self.generator).to("cuda")
+        encoder_noise = torch.randn((encoder_inputs.size(0), 4, LATENTS_HEIGHT, LATENTS_WIDTH)).to("cuda")
         
         cloth_agnostic_mask_latents, densepose_latents, cloth_latents = \
             torch.chunk(self.encoder(encoder_inputs, encoder_noise), 3, dim=0)
@@ -147,7 +147,7 @@ class MyModel(nn.Module):
         image_embeddings = self.dinov2(cloth_for_image_encoder)
         image_embeddings = self.mlp(image_embeddings)
         
-        x_T = torch.randn(self.latent_shape, generator=self.generator).to("cuda")
+        x_T = torch.randn(self.latent_shape).to("cuda")
         
         CFG = True if self.args.do_cfg else False
         
