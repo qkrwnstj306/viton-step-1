@@ -120,7 +120,8 @@ class DDIMSampler:
         pixel_tv_loss, pixel_l2_loss = torch.tensor(0, dtype=x_t.dtype, device=x_t.device), torch.tensor(0, dtype=x_t.dtype, device=x_t.device)
         if not model.probabilities < model.p_uncond and decoder is not None:
             latent_predicted_x0 = (x_t - torch.sqrt(1 - self.gather_and_expand(self.alphas_bar.to("cuda"), t.to("cuda"), x_0.shape)) * predicted_eps) / torch.sqrt(self.gather_and_expand(self.alphas_bar.to("cuda"), t.to("cuda"), x_0.shape))
-            pixel_tv_loss, pixel_l2_loss = self.pixel_loss(decoder, latent_predicted_x0, input_image, t)
+            #pixel_tv_loss, pixel_l2_loss = self.pixel_loss(decoder, latent_predicted_x0, input_image, t)
+            pixel_tv_loss = self.pixel_loss(decoder, latent_predicted_x0, input_image, t)
             del latent_predicted_x0
 
         del x_t
@@ -244,14 +245,16 @@ class PixelLoss(nn.Module):
         pred = decoder(pred)
         
         tv_loss = self.tv_loss(pred)
-        l2_loss = self.l2_loss(pred, gt)
+        #l2_loss = self.l2_loss(pred, gt) #l2는 너무 변동성이크다.
         #logger.info(f"Time Step: {t}")
-        if t == 0:
-            t = torch.tensor(1)
-        sqrt_t = torch.sqrt(t.to("cuda") + 1e-8)
-        tv_loss, l2_loss = tv_loss * self.tv_strength, l2_loss * self.l2_strength * sqrt_t
         
-        return tv_loss, l2_loss
+        # if t == 0:
+        #     t = torch.tensor(1)
+        sqrt_t = torch.sqrt(t.to("cuda") + 1e-8)
+        tv_loss = tv_loss * self.tv_strength
+        #l2_loss = l2_loss * self.l2_strength * sqrt_t
+        
+        return tv_loss#, l2_loss
         
     def tv_loss(self, pred):
         # pred: [BS, 3, 512, 384]

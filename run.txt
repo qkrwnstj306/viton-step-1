@@ -37,7 +37,7 @@ Pixel loss in Step2: CUDA_VISIBLE_DEVICES=3,4,5,6 python pl.py \
 --batch_size 32
 --use_pixel_loss True
 
-Pixel loss in Step2: CUDA_VISIBLE_DEVICES=3 python pl.py \
+Pixel loss in Step2 on 1 GPUs (48GB): CUDA_VISIBLE_DEVICES=3 python pl.py \
 --resume False \
 --n_gpus 1 \
 --batch_size 4 \

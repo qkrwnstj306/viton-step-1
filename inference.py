@@ -30,7 +30,7 @@ LATENTS_WIDTH = WIDTH // 8
 LATENTS_HEIGHT = HEIGHT // 8
 
 """
-CUDA_VISIBLE_DEVICES=0 python inference.py --seed 0 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
+CUDA_VISIBLE_DEVICES=0 python inference.py --seed 23 --save_dir ./outputs/epoch-54 --paired False --blending False --batch_size 4
 """
 
 def setting():
